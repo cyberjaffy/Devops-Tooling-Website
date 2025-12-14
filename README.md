@@ -29,7 +29,8 @@ The infrastructure will follow a three-tier architecture pattern with stateless 
 
 ## Architecture Diagram
 
-   ![image 1](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%201.jpg)
+<img width="1660" height="1052" alt="image" src="https://github.com/user-attachments/assets/ba1363bf-e069-463f-a8c2-1b5b9ff9a89f" />
+
 
 It is important to know what storage solution is suitable for what use cases, for this - we need to answer following questions: what data will be stored, in what format, how this data will be accessed, by whom, from where, how frequently, etc. Base on this you will be able to choose the right storage system for your solution.
 
@@ -38,14 +39,14 @@ It is important to know what storage solution is suitable for what use cases, fo
 1. Spin up a new EC2 instance with RHEL Linux 9 Operating System.
 2. Based on your LVM experience from Project 6, Configure LVM on the Server. Create 3 volumes in the same AZ as your Web Server EC2.
 
-   ![image 2](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%202.jpg)
+<img width="2254" height="452" alt="image" src="https://github.com/user-attachments/assets/4670be83-d91b-4bba-ba9e-3b510e6b627f" />
 
 3. SSH into your instance and update your machine:
 
    ```
    sudo yum update -y
    ```
-   ![image 3](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%203.jpg)
+  <img width="2874" height="1684" alt="image" src="https://github.com/user-attachments/assets/ee35a1e4-722a-48d4-913e-0c07d4144407" />
 
    
 5. List the disk:
@@ -60,12 +61,25 @@ It is important to know what storage solution is suitable for what use cases, fo
    df -h
    ```
 
-7. Use gdisk utility to create a single partition on each of the 3 disks:
+7. Use gdisk utility to create a single partition on each of the 3 disks, might need to download gdisk for RHEL with wget:
 
    ```
-   sudo gdisk /dev/xvdf
+   wget https://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/Packages/gdisk-1.0.7-5.el9.x86_64.rpm 
    ```
-   ![image 4](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%204.jpg)
+   ```
+   sudo yum install ./gdisk-1.0.7-5.el9.x86_64.rpm
+   ```
+
+   ```
+   sudo gdisk /dev/nvme1n1
+   ```
+   ```
+   sudo gdisk /dev/nvme2n1
+   ```
+   ```
+   sudo gdisk /dev/nvme3n1
+   ```   
+<img width="1274" height="1418" alt="image" src="https://github.com/user-attachments/assets/713fb632-a494-428d-8d87-7a268181efed" />
 
 
 9. Install lvm2 package: creating logical volumes, which can be resized or moved without needing to unmount file systems.
@@ -79,14 +93,11 @@ It is important to know what storage solution is suitable for what use cases, fo
     ```
     sudo lvmdiskscan
     ```
-   ![image 5](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%205.jpg)
-
-
 
 11. Create Physical Volumes Use pvcreate utility to mark each of 3 disks as physical volumes (PVs) to be used by LVM
 
     ```
-    sudo pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
+    sudo pvcreate /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1
     ```
 
 12. Verify that your Physical volume has been created successfully
@@ -100,6 +111,8 @@ It is important to know what storage solution is suitable for what use cases, fo
     ```
     sudo vgcreate webdata-vg /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
     ```
+    <img width="733" height="47" alt="Screenshot 2025-12-14 at 02 15 01" src="https://github.com/user-attachments/assets/dfb4f63a-4e59-4a11-bf87-86b5cd3f6c25" />
+
 
 14. Verify that your VG has been created successfully
 
@@ -110,9 +123,9 @@ It is important to know what storage solution is suitable for what use cases, fo
 15. Create Logical Volumes Use lvcreate utility to create logical volumes
 
     ```
-    sudo lvcreate -L 14G -n lv-apps webdata-vg
-    sudo lvcreate -L 14G -n lv-logs webdata-vg
-    sudo lvcreate -L 14G -n lv-opt  webdata-vg
+    sudo lvcreate -L 10G -n lv-apps webdata-vg
+    sudo lvcreate -L 10G -n lv-logs webdata-vg
+    sudo lvcreate -L 10G -n lv-opt  webdata-vg
     ```
 
 16. Verify that our Logical Volume has been created successfully
@@ -121,8 +134,8 @@ It is important to know what storage solution is suitable for what use cases, fo
     sudo lvs
     ```
 
-   ![image 6](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%206.jpg)
-        
+   <img width="1398" height="150" alt="image" src="https://github.com/user-attachments/assets/23120442-4173-4b29-9314-8f7993d51467" />
+
 17. Verify the entire setup #view complete setup - VG , PV, and LV
 
     ```
@@ -157,19 +170,21 @@ It is important to know what storage solution is suitable for what use cases, fo
     sudo mount /dev/webdata-vg/lv-opt /mnt/opt
     ```
 
-22. Add Mount Points to /etc/fstab 
+22. Add Mount Points to /etc/fstab
 
     ```
     sudo vi /etc/fstab
     ```
 
-23. Add the following lines:
+24. run `blkid` to get the uuid of the logical volumes 
+25. Add the following lines:
 
     ```
-    /dev/webdata-vg/lv-apps /mnt/apps xfs defaults 0 0
-    /dev/webdata-vg/lv-logs /mnt/logs xfs defaults 0 0
-    /dev/webdata-vg/lv-opt /mnt/opt xfs defaults 0 0
+   UUID=67c20376-144e-44a2-a275-6cae7dc65503  /mnt/opt   xfs  defaults  0 0
+   UUID=9d0fef3f-fe1a-4de2-902f-4dbaa1618c4c  /mnt/apps  xfs  defaults  0 0
+   UUID=b1dc575a-a985-4217-8184-77bfb9dad7cf  /mnt/logs  xfs  defaults  0 0
     ```
+   <img width="1838" height="492" alt="image" src="https://github.com/user-attachments/assets/98ad14ce-ae7d-4f68-9c01-4add8392432e" />
 
 24. Verify Mounts:
 
@@ -218,12 +233,14 @@ It is important to know what storage solution is suitable for what use cases, fo
     /mnt/logs 172.31.32.0/20(rw,sync,no_all_squash,no_root_squash)
     /mnt/opt 172.31.32.0/20(rw,sync,no_all_squash,no_root_squash)
     ```
+   <img width="960" height="168" alt="image" src="https://github.com/user-attachments/assets/bc59c205-72ae-4aef-83d0-15b18c3fb264" />
 
 31. Export the NFS Shares:
 
     ```
     sudo exportfs -arv
     ```
+   <img width="730" height="170" alt="image" src="https://github.com/user-attachments/assets/dc6401ca-6f09-4e98-a835-5bf138c71c80" />
 
 
 32. Check which port is used by NFS and open necessary ports in Security Groups (add new Inbound Rule). Check NFS Ports:
@@ -231,11 +248,12 @@ It is important to know what storage solution is suitable for what use cases, fo
     ```
     rpcinfo -p | grep nfs
     ```
+   <img width="730" height="170" alt="image" src="https://github.com/user-attachments/assets/c29b9fc6-e235-490c-8c3b-0fb7584df770" />
 
-   ![image 7](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%207.jpg)
     
 ### Important note: In order for NFS server to be accessible from our client,we open following ports: TCP 111, UDP 111, UDP 2049.
 
+<img width="1137" height="257" alt="Screenshot 2025-12-14 at 04 37 35" src="https://github.com/user-attachments/assets/086c634b-a6e4-4a28-b645-b6bc9ebed216" />
 
 ## Step 2 - Configure the database server
 
@@ -276,15 +294,15 @@ Create EC2 instance of t2.micro type with Ubuntu Server launch in the default re
    exit
    ```
 
-   ![image 9](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%209.jpg)
+<img width="1206" height="694" alt="image" src="https://github.com/user-attachments/assets/3dca4c4c-effa-4313-9268-94619ad24748" />
 
 6. Update the bind-address in the /etc/mysql/mysql.conf.d/mysqld.cnf file to allow remote connections:
 
    ```
    sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
    ```
+   <img width="1578" height="1690" alt="image" src="https://github.com/user-attachments/assets/e390a233-c880-4d37-878c-512a79eb85ab" />
 
-   ![image 10](https://github.com/Captnfresh/DevOps-Tooling-Website-Solution/blob/main/DevOps%20Tooling%20Website/image%2010.jpg)
 
 ##  Step 3 - Prepare the webservers
 
@@ -306,13 +324,15 @@ Create EC2 instance of t2.micro type with Ubuntu Server launch in the default re
    sudo mkdir /var/www
    sudo mount -t nfs -o rw,nosuid <NFS-Server-Private-IP-Address>:/mnt/apps /var/www
    ```
-
+   
 4. Verify that NFS was mounted successfully
 
    ```
    df -h
    ```  
+   <img width="1394" height="446" alt="image" src="https://github.com/user-attachments/assets/1bd446ae-9ac0-4a2c-8177-f9155b59b8e3" />
 
+   
 5. Make sure that the changes will persist on Web Server after reboot:
 
    ```
