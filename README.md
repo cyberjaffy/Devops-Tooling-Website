@@ -380,27 +380,100 @@ Create EC2 instance of t2.micro type with Ubuntu Server launch in the default re
 12. Clone the repository you forked the project into
 
     ```
-    sudo git clone https://github.com/Captnfresh/DevOps-Tooling-Website-Solution.git
+    sudo git clone https://github.com/StegTechHub/tooling.git
     ```
 
-13.  Open Website in Browser: Open the website using `http://<Web-Server-Public-IP-Address>/index.php` and ensure you can log in with the credentials you created.
+
+13. Configure Application Database and Admin User
+
+Now we configure the application database and create an initial admin user.
+
+Apply Database Schema (tooling-db.sql)
+	Access the tooling-db.sql file from the cloned repository on the Web Server and configure the credentials to that of the database.
+	Connect to the MySQL server from the Web Server and apply the schema:
+   
+```   
+mysql -h <DB-Private-IP-Address> -u webaccess -p tooling < tooling-db.sql
+```
+
+This command creates all required tables for the tooling application.
+
+ Create an Admin User in MySQL
+
+Log in to the database:
+
+```
+mysql -h <DB-Private-IP-Address> -u webaccess -p tooling
+```
+Insert the admin user without specifying the id (to avoid duplicate key errors):
+
+```
+INSERT INTO users (username, password, email, user_type, status)
+VALUES (
+  'myuser',
+  'mypassword',
+  'user@mail.com',
+  'admin',
+  1
+);
+```
+
+Verify the user was created:
+
+```
+SELECT id, username, user_type, status FROM users;
+```
+```
+Exit MySQL:
+```
+```
+EXIT;
+```
+
+15. Update Application Database Configuration
+
+Edit the database connection file on the Web Server:
+
+sudo vi /var/www/html/functions.php
+
+Ensure the database credentials match what you created:
+
+$db = mysqli_connect(
+    '<DB-Private-IP-Address>',
+    'webaccess',
+    'mypass',
+    'tooling'
+);
+
+Save and exit.
+
+⸻
+
+16. Configure Security Groups for MySQL Access
+
+On the MySQL EC2 Security Group, add an inbound rule:
+
+Type	Protocol	Port	Source
+MySQL/Aurora	TCP	3306	Web Server Security Group or Web Server Private IP
+
+This allows the Web Servers to connect securely to the database.
 
 
+17. Access the Tooling Website
 
+Open a browser and navigate to:
 
+http://<Web-Server-Public-IP-Address>/index.php
 
+Log in using:
+	•	Username: myuser
+	•	Password: password
 
+✅ You should now have full admin access to the DevOps Tooling Website.
 
+18.   Open Website in Browser: Open the website using `http://<Web-Server-Public-IP-Address>/index.php` and ensure you can log in with the credentials you created.
 
-
-
-
-
-
-
-
-
-
+<img width="2424" height="1330" alt="image" src="https://github.com/user-attachments/assets/bc736b50-f2e0-4998-ace7-5c3169ae07ef" />
 
 
 
