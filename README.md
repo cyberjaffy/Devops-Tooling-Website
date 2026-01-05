@@ -109,7 +109,7 @@ It is important to know what storage solution is suitable for what use cases, fo
 13. Use vgcreate utility to add all 3 PVs to a volume group (VG) Name the VG webdata-vg
 
     ```
-    sudo vgcreate webdata-vg /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
+    sudo vgcreate webdata-vg /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1
     ```
     <img width="733" height="47" alt="Screenshot 2025-12-14 at 02 15 01" src="https://github.com/user-attachments/assets/dfb4f63a-4e59-4a11-bf87-86b5cd3f6c25" />
 
